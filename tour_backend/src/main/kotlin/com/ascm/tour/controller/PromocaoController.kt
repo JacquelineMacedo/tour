@@ -1,9 +1,13 @@
 package com.ascm.tour.controller
 
 import com.ascm.tour.entities.Promocao
+import com.ascm.tour.entities.RespostaJson
 import com.ascm.tour.service.PromocaoService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @RestController
@@ -14,23 +18,48 @@ class PromocaoController {
     lateinit var promocaoService: PromocaoService
 
     @GetMapping("/{id}")
-    fun findId(@PathVariable id: Long) = this.promocaoService.getById(id)
+    fun findId(@PathVariable id: Long): ResponseEntity<Promocao?> {
+        var promocao = this.promocaoService.getById(id)
+        var status = if (promocao == null) HttpStatus.NOT_FOUND else HttpStatus.OK
+        return ResponseEntity(promocao, status)
+    }
 
     @PostMapping
-    fun create(@RequestBody promocao: Promocao) {
-       this.promocaoService.create(promocao)
+    fun create(@RequestBody promocao: Promocao): ResponseEntity<RespostaJson> {
+        this.promocaoService.create(promocao)
+       var respostaJson = RespostaJson(message = "OK", date = Date())
+        return ResponseEntity(respostaJson, HttpStatus.CREATED)
     }
+
     @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: Long) {
-        this.promocaoService.delete(id)
+    fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
+        var status = HttpStatus.NOT_FOUND
+        if (this.promocaoService.getById(id) != null) {
+            status = HttpStatus.ACCEPTED
+            this.promocaoService.delete(id)
+        }
+        return ResponseEntity(Unit, status)
     }
+
     @PutMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody promocao: Promocao) {
-        this.promocaoService.update(id, promocao)
+    fun update(@PathVariable id: Long, @RequestBody promocao: Promocao): ResponseEntity<Unit> {
+        var status = HttpStatus.NOT_FOUND
+        if (this.promocaoService.getById(id) != null) {
+            this.promocaoService.update(id, promocao)
+            status = HttpStatus.ACCEPTED
+        }
+        return ResponseEntity(Unit, status)
     }
+
     @GetMapping
-    fun findAll(@RequestParam(required = false, defaultValue = "") localFilter: String) =
-    this.promocaoService.searchByLocal(localFilter)
+    fun findAll(@RequestParam(required = false, defaultValue = "") localFilter: String): ResponseEntity<List<Promocao>> {
+        var status = HttpStatus.OK
+        var listPromocao = this.promocaoService.searchByLocal(localFilter)
+        if (listPromocao.size == 0) {
+            status = HttpStatus.NOT_FOUND
+        }
+        return ResponseEntity(listPromocao, status)
     }
+}
 
 
