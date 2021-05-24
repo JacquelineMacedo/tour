@@ -1,7 +1,9 @@
 package com.ascm.tour.controller
 
+import com.ascm.tour.advice.ErrorMessage
 import com.ascm.tour.entities.Promocao
 import com.ascm.tour.entities.RespostaJson
+import com.ascm.tour.exception.PromocaoException
 import com.ascm.tour.service.PromocaoService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -18,10 +20,12 @@ class PromocaoController {
     lateinit var promocaoService: PromocaoService
 
     @GetMapping("/{id}")
-    fun findId(@PathVariable id: Long): ResponseEntity<Promocao?> {
+    fun findId(@PathVariable id: Long): ResponseEntity<Any> {
         var promocao = this.promocaoService.getById(id)
-        var status = if (promocao == null) HttpStatus.NOT_FOUND else HttpStatus.OK
-        return ResponseEntity(promocao, status)
+        return if (promocao != null)
+              return ResponseEntity(promocao, HttpStatus.OK)
+        else
+            return ResponseEntity(ErrorMessage("Promocao Não Localizada","Promocao ${id} não localizado"), HttpStatus.NOT_FOUND)
     }
 
     @PostMapping
